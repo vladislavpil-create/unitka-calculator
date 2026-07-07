@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Калькулятор юнит-экономики</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --text: #18212b;
+      --muted: #647180;
+      --line: #d9e0e7;
+      --accent: #1677c7;
+      --green: #0c8a65;
+      --red: #b42318;
+      --shadow: 0 12px 30px rgba(25, 38, 52, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body.locked .app {
+      display: none;
+    }
+
+    .lock-screen {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: var(--bg);
+      z-index: 20;
+    }
+
+    body.locked .lock-screen {
+      display: grid;
+    }
+
+    .lock-panel {
+      width: min(360px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .lock-panel h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .lock-panel p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .lock-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .primary-button {
+      height: 38px;
+      border: 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .lock-error {
+      display: none;
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    .lock-error.visible {
+      display: block;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(26px, 4vw, 42px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 4px;
+      background: #e8edf2;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      flex: 0 0 auto;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 9px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 92px;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 410px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .panel-note {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .inputs {
+      padding: 8px 18px 18px;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 1fr 132px;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf1f4;
+    }
+
+    .field:last-child {
+      border-bottom: 0;
+    }
+
+    label {
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .unit {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 38px;
+      border: 1px solid #cbd5df;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 0 10px;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid rgba(22, 119, 199, 0.18);
+      border-color: var(--accent);
+    }
+
+    .reset {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+
+    .results {
+      display: grid;
+      gap: 18px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 96px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .metric-value {
+      margin-top: 9px;
+      font-size: clamp(19px, 2.4vw, 27px);
+      line-height: 1.1;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .good .metric-value,
+    .positive {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .bad .metric-value,
+    .negative {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .tables {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .sales-plan {
+      display: grid;
+      gap: 14px;
+    }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 18px 16px;
+    }
+
+    .scenario {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #f8fafc;
+    }
+
+    .scenario-name {
+      margin: 0 0 8px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .scenario-line {
+      margin: 4px 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .kpi-table {
+      min-width: 760px;
+    }
+
+    .kpi-more {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 7px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .kpi-more:hover {
+      border-color: #bac6d1;
+    }
+
+    .kpi-details {
+      display: none;
+      background: #f8fafc;
+    }
+
+    .kpi-details.open {
+      display: table-row;
+    }
+
+    .kpi-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 12px 0;
+    }
+
+    .kpi-detail-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .kpi-detail-label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .kpi-detail-value {
+      margin-top: 5px;
+      font-weight: 700;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 390px;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf1f4;
+      text-align: right;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+      color: var(--muted);
+    }
+
+    th {
+      color: var(--text);
+      font-weight: 700;
+      background: #f8fafc;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    @media (max-width: 920px) {
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .tabs {
+        width: fit-content;
+      }
+
+      .layout,
+      .tables,
+      .scenario-grid,
+      .kpi-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: min(100% - 18px, 1180px);
+        padding-top: 14px;
+      }
+
+      .field,
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .tabs {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .tab {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body class="locked">
+  <section class="lock-screen" aria-label="Вход">
+    <form class="lock-panel" id="lockForm">
+      <h1>Доступ к калькулятору</h1>
+      <p>Введите пароль, чтобы открыть расчеты.</p>
+      <div class="lock-actions">
+        <input id="passwordInput" type="password" autocomplete="current-password" placeholder="Пароль">
+        <button class="primary-button" type="submit">Открыть</button>
+        <div class="lock-error" id="lockError">Неверный пароль</div>
+      </div>
+    </form>
+  </section>
+  <main class="app">
+    <div class="topbar">
+      <div>
+        <h1>Калькулятор юнит-экономики</h1>
+        <p class="subtitle">Меняйте входные цифры, результаты пересчитываются сразу.</p>
+      </div>
+      <div class="tabs" aria-label="Расчет">
+        <button class="tab active" type="button" data-tab="ozon">Ozon</button>
+        <button class="tab" type="button" data-tab="wbUnit">WB Unit 3.0</button>
+        <button class="tab" type="button" data-tab="kpi">KPI</button>
+      </div>
+    </div>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title" id="productTitle">Говяжье легкое</h2>
+          <p class="panel-note" id="productNote">Входные данные из Excel можно менять под любой товар.</p>
+        </div>
+        <div class="inputs" id="inputs"></div>
+      </aside>
+
+      <section class="results">
+        <div class="summary" id="summary"></div>
+
+        <div class="tables" id="mainTables">
+          <article class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title" id="leftTitle">Расчет прибыли</h2>
+              <p class="panel-note" id="leftNote">Основные расходы и прибыль.</p>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <tbody id="leftRows"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title" id="rightTitle">Детализация</h2>
+              <p class="panel-note" id="rightNote">Расшифровка итогов.</p>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <tbody id="rightRows"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+        <article class="panel sales-plan" id="salesPlan">
+          <div class="panel-header">
+            <h2 class="panel-title">План продаж партии 500 кг</h2>
+          <p class="panel-note">Сценарии по цене продажи. План 3000 единиц должен выполняться за 30 дней, первая партия 500 кг покрывает старт продаж.</p>
+          </div>
+          <div class="scenario-grid" id="scenarioCards"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>День</th>
+                  <th>Хреновый исход</th>
+                  <th>Средний исход</th>
+                  <th>Хороший исход</th>
+                  <th>Суперский исход</th>
+                </tr>
+              </thead>
+              <tbody id="planRows"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const schemas = {
+      ozon: {
+        title: 'Ozon: говяжье легкое',
+        note: 'Расчет из первой таблицы: два налоговых варианта для сравнения.',
+        fields: [
+          ['price', 'Розничная цена', 'руб за штуку', 1],
+          ['purchase', 'Закуп', 'руб за штуку', 1],
+          ['commission', 'Комиссия Ozon', '% от цены', 0.1],
+          ['logistics', 'Логистика', 'руб за штуку', 1],
+          ['fulfillment', 'Фулфилмент', 'руб за штуку', 1],
+          ['acquiring', 'Эквайринг', 'руб за штуку', 1],
+          ['ads', 'Реклама ДРР', '% от цены', 0.1],
+          ['quantity', 'Количество', 'штук в месяц', 1],
+          ['vatMode', 'НДС 5% во втором варианте', 'как считать налог', 'select']
+        ],
+        data: {
+          price: 2800,
+          purchase: 900,
+          commission: 41,
+          logistics: 141,
+          fulfillment: 10,
+          acquiring: 20,
+          ads: 5,
+          quantity: 3000,
+          vatMode: 'included'
+        }
+      },
+      kpi: {
+        title: 'KPI по Ozon',
+        note: 'Оклад, порог выплаты, план 3000 шт за 30 дней и бонус за перевыполнение.',
+        fields: [
+          ['totalUnits', 'План продаж', 'единиц за 30 дней', 1],
+          ['batchKg', 'Первая партия', 'кг / штук по 1 кг', 1],
+          ['salary', 'Оклад', 'руб в месяц', 1000],
+          ['kpiStart', 'Старт KPI', '% выполнения плана', 1],
+          ['overUnits', 'Перевыполнение', 'шт сверх плана для примера', 1],
+          ['overBonus', 'Бонус за перевыполнение', '% от чистой прибыли сверх плана', 1]
+        ],
+        data: {
+          totalUnits: 3000,
+          batchKg: 500,
+          salary: 100000,
+          kpiStart: 85,
+          overUnits: 500,
+          overBonus: 20
+        }
+      },
+      wbUnit: {
+        title: 'WB Unit 3.0: легкое 1000 г',
+        note: 'Новая юнитка из файла "_WB Unit 3.0 (Шаблон) Владислав.xlsx".',
+        fields: [
+          ['basePrice', 'Базовая цена до скидки', 'руб', 1],
+          ['discount', 'Размер скидки', '%', 0.1],
+          ['spp', 'СПП', '%', 0.1],
+          ['wallet', 'WB Кошелек', '%', 0.1],
+          ['purchase', 'Цена закупки', 'руб за штуку', 1],
+          ['toStock', 'Логистика до склада', 'руб за штуку', 1],
+          ['packaging', 'Цена упаковки', 'руб за штуку', 1],
+          ['fulfillment', 'Упаковка / ФФ', 'руб за штуку', 1],
+          ['height', 'Высота упаковки', 'см', 0.1],
+          ['length', 'Длина упаковки', 'см', 0.1],
+          ['width', 'Ширина упаковки', 'см', 0.1],
+          ['commission', 'Комиссия WB', '%', 0.1],
+          ['acquiring', 'Эквайринг', '% от цены после скидки', 0.1],
+          ['storage', 'Хранение', 'руб за штуку', 0.01],
+          ['logisticsBase', 'Логистика до ПВЗ без ИРП', 'руб за штуку', 0.01],
+          ['logisticsMultiplier', 'Коэффициент логистики', 'множитель', 0.01],
+          ['irp', 'Индекс распределения продаж', '%', 0.1],
+          ['reverseLogistics', 'Обратная логистика', 'руб за штуку', 0.01],
+          ['buyout', 'Процент выкупа', '%', 0.1],
+          ['ads', 'WB продвижение', '% от цены после скидки', 0.1],
+          ['tax', 'УСН доходы-расходы', '%', 0.1],
+          ['vat', 'НДС', '%', 0.1],
+          ['extraPercent', 'Дополнительные расходы', '% от цены после скидки', 0.1],
+          ['extraRub', 'Дополнительные расходы', 'руб за штуку', 1],
+          ['quantity', 'Количество', 'штук в месяц', 1]
+        ],
+        data: {
+          basePrice: 3000,
+          discount: 10,
+          spp: 30,
+          wallet: 3,
+          purchase: 900,
+          toStock: 50,
+          packaging: 0,
+          fulfillment: 10,
+          height: 40,
+          length: 28,
+          width: 8,
+          commission: 30.5,
+          acquiring: 2,
+          storage: 26.88,
+          logisticsBase: 307.008,
+          logisticsMultiplier: 1.05,
+          irp: 1,
+          reverseLogistics: 157.44,
+          buyout: 98,
+          ads: 5,
+          tax: 15,
+          vat: 5,
+          extraPercent: 0,
+          extraRub: 0,
+          quantity: 1
+        }
+      }
+    };
+
+    const state = {
+      ozon: structuredClone(schemas.ozon.data),
+      wbUnit: structuredClone(schemas.wbUnit.data),
+      kpi: structuredClone(schemas.kpi.data)
+    };
+
+    let activeTab = 'ozon';
+
+    const money = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 });
+    const money2 = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const percent = new Intl.NumberFormat('ru-RU', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const number = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
+    const byId = (id) => document.getElementById(id);
+    const APP_PASSWORD = 'unitka2026';
+
+    function unlockApp() {
+      document.body.classList.remove('locked');
+      sessionStorage.setItem('unitkaUnlocked', '1');
+    }
+
+    byId('lockForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (byId('passwordInput').value === APP_PASSWORD) {
+        unlockApp();
+        byId('lockError').classList.remove('visible');
+      } else {
+        byId('lockError').classList.add('visible');
+      }
+    });
+
+    if (sessionStorage.getItem('unitkaUnlocked') === '1') {
+      unlockApp();
+    }
+
+    function rub(value) {
+      return `${money.format(value)} ₽`;
+    }
+
+    function rub2(value) {
+      return `${money2.format(value)} ₽`;
+    }
+
+    function percentText(value) {
+      return percent.format(value);
+    }
+
+    function roundDown(value) {
+      return Math.floor(value + 1e-9);
+    }
+
+    function valueClass(value) {
+      if (value > 0) return 'positive';
+      if (value < 0) return 'negative';
+      return '';
+    }
+
+    function row(label, value, formatter = rub2) {
+      return `<tr><td>${label}</td><td class="${valueClass(value)}">${formatter(value)}</td></tr>`;
+    }
+
+    function summaryCard(label, value, className = '') {
+      return `<div class="metric ${className}"><div class="metric-label">${label}</div><div class="metric-value">${value}</div></div>`;
+    }
+
+    function toInputValue(key, value) {
+      const percentFields = ['commission', 'ads', 'discount', 'spp', 'wallet', 'acquiring', 'irp', 'buyout', 'tax', 'vat', 'extraPercent'];
+      return percentFields.includes(key) ? value : value;
+    }
+
+    function fromInputValue(key) {
+      const value = Number(byId(key).value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function renderInputs() {
+      const schema = schemas[activeTab];
+      byId('productTitle').textContent = schema.title;
+      byId('productNote').textContent = schema.note;
+      byId('inputs').innerHTML = schema.fields.map(([key, label, unit, step]) => {
+        if (step === 'select') {
+          return `<div class="field">
+            <label for="${key}">${label}<span class="unit">${unit}</span></label>
+            <select id="${key}">
+              <option value="included">Включен в цену: 5/105</option>
+              <option value="top">5% от цены</option>
+            </select>
+          </div>`;
+        }
+        return `<div class="field">
+          <label for="${key}">${label}<span class="unit">${unit}</span></label>
+          <input id="${key}" type="number" min="0" step="${step}">
+        </div>`;
+      }).join('') + '<button class="reset" type="button" id="reset" onclick="resetActive()">Вернуть значения из Excel</button>';
+
+      schema.fields.forEach(([key, , , step]) => {
+        byId(key).value = toInputValue(key, state[activeTab][key]);
+        byId(key).addEventListener(step === 'select' ? 'change' : 'input', () => {
+          readInputs();
+          render();
+        });
+      });
+
+      byId('reset').addEventListener('click', resetActive);
+    }
+
+    function resetActive() {
+      state[activeTab] = structuredClone(schemas[activeTab].data);
+      renderInputs();
+      render();
+    }
+
+    function readInputs() {
+      const schema = schemas[activeTab];
+      schema.fields.forEach(([key, , , step]) => {
+        state[activeTab][key] = step === 'select' ? byId(key).value : fromInputValue(key);
+      });
+    }
+
+    function calculateOzon(data) {
+      const commissionRub = data.price * data.commission / 100;
+      const adsRub = data.price * data.ads / 100;
+      const expenses = data.purchase + commissionRub + data.logistics + data.fulfillment + data.acquiring + adsRub;
+      const profitBeforeTax = data.price - expenses;
+      const revenueMonth = data.price * data.quantity;
+      const profitBeforeTaxMonth = profitBeforeTax * data.quantity;
+      const incomeTaxPerItem = data.price * 0.06;
+      const incomeNetPerItem = profitBeforeTax - incomeTaxPerItem;
+      const vatExpensePerItem = data.vatMode === 'included' ? data.price * 5 / 105 : data.price * 0.05;
+      const taxBase = profitBeforeTax - vatExpensePerItem;
+      const expenseUsnPerItem = Math.max(taxBase * 0.15, 0);
+      const expenseTaxPerItem = expenseUsnPerItem + vatExpensePerItem;
+      const expenseNetPerItem = profitBeforeTax - expenseTaxPerItem;
+
+      return {
+        commissionRub,
+        adsRub,
+        expenses,
+        profitBeforeTax,
+        revenueMonth,
+        profitBeforeTaxMonth,
+        marginBeforeTax: data.price ? profitBeforeTax / data.price : 0,
+        income: {
+          taxPerItem: incomeTaxPerItem,
+          netPerItem: incomeNetPerItem,
+          taxMonth: incomeTaxPerItem * data.quantity,
+          netMonth: incomeNetPerItem * data.quantity,
+          margin: data.price ? incomeNetPerItem / data.price : 0
+        },
+        expense: {
+          taxPerItem: expenseTaxPerItem,
+          netPerItem: expenseNetPerItem,
+          taxMonth: expenseTaxPerItem * data.quantity,
+          netMonth: expenseNetPerItem * data.quantity,
+          margin: data.price ? expenseNetPerItem / data.price : 0
+        }
+      };
+    }
+
+    function distributeSales(total, days) {
+      const base = Math.floor(total / days);
+      const remainder = total % days;
+      return Array.from({ length: days }, (_, index) => base + (index < remainder ? 1 : 0));
+    }
+
+    function calculateOzonAtPrice(data, price) {
+      return calculateOzon({ ...data, price });
+    }
+
+    function buildSalesPlan(data) {
+      const firstBatch = Math.max(Math.round(data.batchKg || 0), 0);
+      const totalUnits = Math.max(Math.round(data.totalUnits || data.quantity || firstBatch), firstBatch);
+      const salary = Math.max(data.salary || 0, 0);
+      const kpiStart = Math.max(Math.min(data.kpiStart || 0, 100), 0);
+      const overUnits = Math.max(Math.round(data.overUnits || 0), 0);
+      const overBonusRate = Math.max(data.overBonus || 0, 0);
+      const planDays = 30;
+      const scenarios = [
+        { key: 'bad', name: 'Хреновый исход', price: 2400, bonusRate: 0, tone: 'Низкая цена и минимальная маржа.' },
+        { key: 'middle', name: 'Средний исход', price: 2700, bonusRate: 10, tone: 'Рабочая цена для месячного плана.' },
+        { key: 'good', name: 'Хороший исход', price: 2900, bonusRate: 15, tone: 'Цена выше при том же объеме продаж.' },
+        { key: 'super', name: 'Суперский исход', price: 3200, bonusRate: 20, tone: 'Сильная цена при выполнении плана.' }
+      ];
+
+      return scenarios.map((scenario) => {
+        const calc = calculateOzonAtPrice(data, scenario.price);
+        const profitPerItem = calc.income.netPerItem >= calc.expense.netPerItem
+          ? calc.income.netPerItem
+          : calc.expense.netPerItem;
+        const daily = distributeSales(totalUnits, planDays);
+        const firstBatchDays = firstBatch ? firstBatch / (totalUnits / planDays) : 0;
+        const fullBonus = totalUnits * profitPerItem * scenario.bonusRate / 100;
+        const thresholdBonus = fullBonus * kpiStart / 100;
+        const thresholdUnits = Math.ceil(totalUnits * kpiStart / 100);
+        const overProfit = overUnits * profitPerItem;
+        const overBonus = scenario.bonusRate > 0 ? overProfit * overBonusRate / 100 : 0;
+        return {
+          ...scenario,
+          daily,
+          profitPerItem,
+          margin: scenario.price ? profitPerItem / scenario.price : 0,
+          dailyAverage: totalUnits / planDays,
+          firstBatch,
+          firstBatchDays,
+          totalUnits,
+          planDays,
+          firstBatchRevenue: firstBatch * scenario.price,
+          firstBatchProfit: firstBatch * profitPerItem,
+          totalRevenue: totalUnits * scenario.price,
+          totalProfit: totalUnits * profitPerItem,
+          salary,
+          kpiStart,
+          thresholdUnits,
+          fullBonus,
+          thresholdBonus,
+          fullKpiPay: salary + fullBonus,
+          thresholdKpiPay: salary + thresholdBonus,
+          overUnits,
+          overProfit,
+          overBonus,
+          overKpiPay: salary + fullBonus + overBonus
+        };
+      });
+    }
+
+    function planCell(units, price, profitPerItem) {
+      if (!units) return 'готово';
+      return `${units} шт<br>${rub(units * price)}<br>${rub(units * profitPerItem)}`;
+    }
+
+    function ozonPlanData() {
+      return { ...state.ozon, ...state.kpi };
+    }
+
+    function renderOzonSalesPlan(showKpi = false) {
+      const data = ozonPlanData();
+      const batchSize = Math.max(Math.round(data.batchKg || 0), 0);
+      const totalUnits = Math.max(Math.round(data.totalUnits || 0), batchSize);
+      const plan = buildSalesPlan(data);
+      const maxDays = Math.max(...plan.map((scenario) => scenario.planDays));
+
+      byId('salesPlan').style.display = '';
+      byId('salesPlan').querySelector('.panel-title').textContent = showKpi
+        ? `KPI: ${totalUnits} ед. за 30 дней`
+        : `Прогрессия прибыли: ${totalUnits} ед. за 30 дней, первая партия ${batchSize} кг`;
+      byId('salesPlan').querySelector('.panel-note').textContent = showKpi
+        ? `Оклад ${rub(data.salary)}, KPI стартует с ${Math.ceil(totalUnits * data.kpiStart / 100)} шт, перевыполнение считается сверх ${totalUnits} шт.`
+        : `Сценарии по цене продажи. План ${totalUnits} единиц должен выполняться за 30 дней, первая партия ${batchSize} кг покрывает старт продаж.`;
+      byId('salesPlan').querySelector('table').className = '';
+      byId('salesPlan').querySelector('thead').innerHTML = `
+        <tr>
+          <th>День</th>
+          <th>Хреновый исход</th>
+          <th>Средний исход</th>
+          <th>Хороший исход</th>
+          <th>Суперский исход</th>
+        </tr>
+      `;
+      byId('scenarioCards').innerHTML = plan.map((scenario) => `
+        <div class="scenario">
+          <p class="scenario-name">${scenario.name}</p>
+          <p class="scenario-line">Цена: ${rub(scenario.price)} за ед.</p>
+          <p class="scenario-line">${scenario.tone}</p>
+          <p class="scenario-line">Нужно продавать: ${number.format(scenario.dailyAverage)} шт/день</p>
+          <p class="scenario-line">Первая партия закроет: ${number.format(scenario.firstBatchDays)} дней</p>
+          <p class="scenario-line">Прибыль/ед.: ${rub2(scenario.profitPerItem)}</p>
+          <p class="scenario-line">Рентабельность: ${percentText(scenario.margin)}</p>
+          <p class="scenario-line">Чистая прибыль 500 кг: ${rub(scenario.firstBatchProfit)}</p>
+          <p class="scenario-line">Чистая прибыль при продаже ${totalUnits} шт: ${rub(scenario.totalProfit)}</p>
+          ${showKpi ? `
+            <p class="scenario-line">KPI: ${scenario.bonusRate ? `оклад + ${scenario.bonusRate}% прибыли` : 'только оклад'}</p>
+            <p class="scenario-line">Старт KPI: ${scenario.thresholdUnits} шт (${number.format(scenario.kpiStart)}%)</p>
+            <p class="scenario-line">Выплата при старте KPI: ${rub(scenario.thresholdKpiPay)}</p>
+            <p class="scenario-line">Выплата при 100% плана: ${rub(scenario.fullKpiPay)}</p>
+            <p class="scenario-line">+${scenario.overUnits} шт сверх плана: ${scenario.overBonus ? `+${rub(scenario.overBonus)}` : '0 ₽'}</p>
+            <p class="scenario-line">Итого с перевыполнением: ${rub(scenario.overKpiPay)}</p>
+          ` : ''}
+        </div>
+      `).join('');
+
+      byId('planRows').innerHTML = Array.from({ length: maxDays }, (_, index) => {
+        const day = index + 1;
+        return `<tr>
+          <td>${day}</td>
+          <td>${planCell(plan[0].daily[index] || 0, plan[0].price, plan[0].profitPerItem)}</td>
+          <td>${planCell(plan[1].daily[index] || 0, plan[1].price, plan[1].profitPerItem)}</td>
+          <td>${planCell(plan[2].daily[index] || 0, plan[2].price, plan[2].profitPerItem)}</td>
+          <td>${planCell(plan[3].daily[index] || 0, plan[3].price, plan[3].profitPerItem)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function calculateWb(data) {
+      const priceAfterDiscount = roundDown(data.basePrice * (1 - data.discount / 100));
+      const priceAfterSpp = roundDown(priceAfterDiscount * (1 - data.spp / 100));
+      const buyerPrice = roundDown(priceAfterSpp * (1 - data.wallet / 100));
+      const volume = data.height * data.length * data.width / 1000;
+      const extraVolume = Math.max(volume - 1, 0);
+      const cost = data.purchase + data.toStock + data.packaging + data.fulfillment;
+      const commissionRub = priceAfterDiscount * data.commission / 100;
+      const acquiringRub = priceAfterDiscount * data.acquiring / 100;
+      const logisticsToPvz = data.logisticsBase * data.logisticsMultiplier + priceAfterDiscount * data.irp / 100;
+      const buyout = Math.max(data.buyout / 100, 0.01);
+      const logisticsWithBuyout = (1 / buyout) * logisticsToPvz + (1 / buyout - 1) * data.reverseLogistics;
+      const adsRub = priceAfterDiscount * data.ads / 100;
+      const wbServices = commissionRub + acquiringRub + data.storage + logisticsWithBuyout + adsRub;
+      const payout = priceAfterDiscount - wbServices;
+      const vatRub = buyerPrice * (data.vat / 100) / (1 + data.vat / 100);
+      const taxBase = payout - cost - vatRub;
+      const taxRub = taxBase * data.tax / 100;
+      const taxAndVat = taxRub + vatRub;
+      const extraCosts = priceAfterDiscount * data.extraPercent / 100 + data.extraRub;
+      const profitPerItem = priceAfterDiscount - wbServices - taxAndVat - cost - extraCosts;
+      const revenueMonth = priceAfterDiscount * data.quantity;
+      const profitMonth = profitPerItem * data.quantity;
+
+      return {
+        priceAfterDiscount,
+        priceAfterSpp,
+        buyerPrice,
+        volume,
+        extraVolume,
+        cost,
+        commissionRub,
+        acquiringRub,
+        logisticsToPvz,
+        logisticsWithBuyout,
+        adsRub,
+        wbServices,
+        payout,
+        vatRub,
+        taxRub,
+        taxAndVat,
+        extraCosts,
+        profitPerItem,
+        revenueMonth,
+        profitMonth,
+        margin: priceAfterDiscount ? profitPerItem / priceAfterDiscount : 0,
+        profitability: cost ? profitPerItem / cost : 0
+      };
+    }
+
+    function renderOzon() {
+      const result = calculateOzon(state.ozon);
+      const bestIsIncome = result.income.netMonth >= result.expense.netMonth;
+      const bestName = bestIsIncome ? 'УСН 1% + НДС' : 'УСН Д-Р 15% + НДС';
+      const bestValue = bestIsIncome ? result.income.netMonth : result.expense.netMonth;
+
+      byId('mainTables').style.display = '';
+      byId('summary').innerHTML = [
+        summaryCard('Прибыль до налогов за штуку', rub2(result.profitBeforeTax), result.profitBeforeTax >= 0 ? 'good' : 'bad'),
+        summaryCard('Выручка в месяц', rub(result.revenueMonth)),
+        summaryCard(bestName, rub(bestValue), bestValue >= 0 ? 'good' : 'bad'),
+        summaryCard('Разница в месяц', rub(Math.abs(result.income.netMonth - result.expense.netMonth)))
+      ].join('');
+
+      byId('leftTitle').textContent = 'Расчет прибыли';
+      byId('leftNote').textContent = 'До налогов, по одной штуке и за месяц.';
+      byId('rightTitle').textContent = 'Сравнение налогов';
+      byId('rightNote').textContent = 'УСН 1% + НДС 5% против УСН Д-Р 15% + НДС 5%.';
+      byId('leftRows').innerHTML = [
+        row('Комиссия, руб/шт', result.commissionRub),
+        row('Реклама, руб/шт', result.adsRub),
+        row('Итого расходов на 1 шт', result.expenses),
+        row('Прибыль на 1 шт до налогов', result.profitBeforeTax),
+        row('Рентабельность до налогов', result.marginBeforeTax, percentText),
+        row('Прибыль в месяц до налогов', result.profitBeforeTaxMonth, rub)
+      ].join('');
+      byId('rightRows').innerHTML = [
+        `<tr><th>Показатель</th><th>1% + НДС</th><th>Д-Р 15% + НДС</th></tr>`,
+        `<tr><td>Налог на 1 шт</td><td>${rub2(result.income.taxPerItem)}</td><td>${rub2(result.expense.taxPerItem)}</td></tr>`,
+        `<tr><td>Чистая прибыль на 1 шт</td><td class="${valueClass(result.income.netPerItem)}">${rub2(result.income.netPerItem)}</td><td class="${valueClass(result.expense.netPerItem)}">${rub2(result.expense.netPerItem)}</td></tr>`,
+        `<tr><td>Налог в месяц</td><td>${rub(result.income.taxMonth)}</td><td>${rub(result.expense.taxMonth)}</td></tr>`,
+        `<tr><td>Чистая прибыль в месяц</td><td class="${valueClass(result.income.netMonth)}">${rub(result.income.netMonth)}</td><td class="${valueClass(result.expense.netMonth)}">${rub(result.expense.netMonth)}</td></tr>`,
+        `<tr><td>Рентабельность чистая</td><td>${percentText(result.income.margin)}</td><td>${percentText(result.expense.margin)}</td></tr>`
+      ].join('');
+      renderOzonSalesPlan(false);
+    }
+
+    function renderKpi() {
+      const data = ozonPlanData();
+      const plan = buildSalesPlan(data);
+      const superCase = plan[3];
+
+      byId('mainTables').style.display = 'none';
+      byId('summary').innerHTML = [
+        summaryCard('Оклад', rub(data.salary)),
+        summaryCard('Старт KPI', `${Math.ceil(data.totalUnits * data.kpiStart / 100)} шт`),
+        summaryCard('План за 30 дней', `${data.totalUnits} шт`),
+        summaryCard('Суперский + перевыполнение', rub(superCase.overKpiPay), 'good')
+      ].join('');
+      byId('salesPlan').style.display = '';
+      byId('salesPlan').querySelector('.panel-title').textContent = `KPI: ${data.totalUnits} ед. за 30 дней`;
+      byId('salesPlan').querySelector('.panel-note').textContent = `Основная таблица короткая. Детали по старту KPI и перевыполнению открываются кнопкой.`;
+      byId('scenarioCards').innerHTML = '';
+      byId('planRows').innerHTML = plan.map((scenario) => {
+        const detailsId = `kpi-details-${scenario.key}`;
+        return `
+          <tr>
+            <td>${scenario.name.replace(' исход', '')}</td>
+            <td>${rub(scenario.totalProfit)}</td>
+            <td>${scenario.bonusRate}%</td>
+            <td>${rub(scenario.fullBonus)}</td>
+            <td>${rub(data.salary)}</td>
+            <td class="${valueClass(scenario.fullKpiPay)}">${rub(scenario.fullKpiPay)}</td>
+            <td><button class="kpi-more" type="button" onclick="toggleKpiDetails('${detailsId}')">Подробнее</button></td>
+          </tr>
+          <tr class="kpi-details" id="${detailsId}">
+            <td colspan="7">
+              <div class="kpi-detail-grid">
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Цена</div>
+                  <div class="kpi-detail-value">${rub(scenario.price)}</div>
+                </div>
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Рентабельность</div>
+                  <div class="kpi-detail-value">${percentText(scenario.margin)}</div>
+                </div>
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Старт KPI</div>
+                  <div class="kpi-detail-value">${scenario.thresholdUnits} шт</div>
+                </div>
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Выплата при старте</div>
+                  <div class="kpi-detail-value">${rub(scenario.thresholdKpiPay)}</div>
+                </div>
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Прибыль / ед.</div>
+                  <div class="kpi-detail-value">${rub2(scenario.profitPerItem)}</div>
+                </div>
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Перевыполнение</div>
+                  <div class="kpi-detail-value">+${scenario.overUnits} шт</div>
+                </div>
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Бонус за перевыполнение</div>
+                  <div class="kpi-detail-value">${rub(scenario.overBonus)}</div>
+                </div>
+                <div class="kpi-detail-item">
+                  <div class="kpi-detail-label">Итого с перевыполнением</div>
+                  <div class="kpi-detail-value">${rub(scenario.overKpiPay)}</div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      byId('salesPlan').querySelector('table').className = 'kpi-table';
+      byId('salesPlan').querySelector('thead').innerHTML = `
+        <tr>
+          <th>Сценарий</th>
+          <th>Чистая прибыль</th>
+          <th>Бонус %</th>
+          <th>Бонус ₽</th>
+          <th>Оклад</th>
+          <th>Итого сотруднику</th>
+          <th></th>
+        </tr>
+      `;
+    }
+
+    function renderWb() {
+      const result = calculateWb(state.wbUnit);
+      byId('mainTables').style.display = '';
+      byId('salesPlan').style.display = 'none';
+
+      byId('summary').innerHTML = [
+        summaryCard('Прибыль на 1 ед.', rub2(result.profitPerItem), result.profitPerItem >= 0 ? 'good' : 'bad'),
+        summaryCard('Маржинальность', percentText(result.margin), result.margin >= 0 ? 'good' : 'bad'),
+        summaryCard('Рентабельность', percentText(result.profitability), result.profitability >= 0 ? 'good' : 'bad'),
+        summaryCard('Прибыль в месяц', rub(result.profitMonth), result.profitMonth >= 0 ? 'good' : 'bad')
+      ].join('');
+
+      byId('leftTitle').textContent = 'WB Unit 3.0';
+      byId('leftNote').textContent = 'Расчет по строке товара "легкое 1000 г".';
+      byId('rightTitle').textContent = 'Услуги, налоги и прибыль';
+      byId('rightNote').textContent = 'Показатели пересчитываются при изменении входных чисел.';
+      byId('leftRows').innerHTML = [
+        row('Цена после скидки', result.priceAfterDiscount, rub),
+        row('Цена после СПП', result.priceAfterSpp, rub),
+        row('Конечная цена покупателя', result.buyerPrice, rub),
+        row('Объем упаковки', result.volume, (value) => `${number.format(value)} л`),
+        row('Объем сверх 1 литра', result.extraVolume, (value) => `${number.format(value)} л`),
+        row('Итого себестоимость 1 ед.', result.cost),
+        row('Сумма перечислений на р/с', result.payout)
+      ].join('');
+      byId('rightRows').innerHTML = [
+        row('Комиссия WB', result.commissionRub),
+        row('Эквайринг', result.acquiringRub),
+        row('Хранение', state.wbUnit.storage),
+        row('Логистика до ПВЗ', result.logisticsToPvz),
+        row('Логистика с учетом выкупа', result.logisticsWithBuyout),
+        row('WB продвижение', result.adsRub),
+        row('Итого все услуги WB', result.wbServices),
+        row('УСН доходы-расходы', result.taxRub),
+        row('НДС', result.vatRub),
+        row('Налог + НДС', result.taxAndVat),
+        row('Дополнительные расходы', result.extraCosts),
+        row('Прибыль на 1 ед.', result.profitPerItem)
+      ].join('');
+    }
+
+    function render() {
+      if (activeTab === 'ozon') {
+        renderOzon();
+      } else if (activeTab === 'wbUnit') {
+        renderWb();
+      } else {
+        renderKpi();
+      }
+    }
+
+    function toggleKpiDetails(id) {
+      const row = byId(id);
+      if (row) row.classList.toggle('open');
+    }
+
+    function setActiveTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tab').forEach((button) => {
+        button.classList.toggle('active', button.dataset.tab === tab);
+      });
+      renderInputs();
+      render();
+    }
+
+    document.querySelectorAll('.tab').forEach((button) => {
+      button.addEventListener('click', () => setActiveTab(button.dataset.tab));
+    });
+
+    renderInputs();
+    render();
+  </script>
+</body>
+</html>
