@@ -837,9 +837,7 @@
 
       return scenarios.map((scenario) => {
         const calc = calculateOzonAtPrice(data, scenario.price);
-        const profitPerItem = calc.income.netPerItem >= calc.expense.netPerItem
-          ? calc.income.netPerItem
-          : calc.expense.netPerItem;
+        const profitPerItem = calc.expense.netPerItem;
         const daily = distributeSales(totalUnits, planDays);
         const firstBatchDays = firstBatch ? firstBatch / (totalUnits / planDays) : 0;
         const fullBonus = totalUnits * profitPerItem * scenario.bonusRate / 100;
